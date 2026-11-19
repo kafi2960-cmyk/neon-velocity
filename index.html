@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Neon Velocity</title>
+<meta name="description" content="Neon Velocity: a futuristic 3D hover-car racing game with a story mode, garage and tuning. Runs in the browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="flash"></div>
+<div id="vignette"></div>
+
+<section id="loading" class="screen active">
+  <div class="logo huge">NEON<span>VELOCITY</span></div>
+  <div class="loader"><i></i></div>
+  <p id="load-text">Initializing fusion core...</p>
+</section>
+
+<section id="title" class="screen">
+  <div class="title-wrap">
+    <p class="kicker">NEO-KYOTO · 2087</p>
+    <div class="logo huge">NEON<span>VELOCITY</span></div>
+    <p class="tagline">Underground hover-racing league</p>
+    <button class="press" id="press-start">PRESS ENTER OR TAP TO START</button>
+  </div>
+</section>
+
+<section id="menu" class="screen">
+  <header class="topbar">
+    <div class="logo small">NEON<span>VELOCITY</span></div>
+    <div class="credits"><span>CR</span><b class="cr-val">0</b></div>
+  </header>
+  <nav class="menu-list">
+    <button class="menu-item" data-nav="story"><b>Story Mode</b><small id="story-progress">Chapter 1 of 8</small></button>
+    <button class="menu-item" data-nav="quick"><b>Quick Race</b><small>Pick a track and race the pack</small></button>
+    <button class="menu-item" data-nav="trial"><b>Time Trial</b><small>Chase the perfect lap</small></button>
+    <button class="menu-item" data-nav="garage"><b>Garage</b><small>Cars · Tuning · Paint</small></button>
+    <button class="menu-item" data-nav="settings"><b>Settings</b><small>Audio · Graphics · Controls</small></button>
+  </nav>
+  <div class="menu-car" id="menu-car"></div>
+  <footer class="hint">↑ ↓ to choose · ENTER to select</footer>
+</section>
+
+<section id="story" class="screen">
+  <header class="topbar"><button class="back" data-back>‹ Back</button><h1>Story · <span>The Apex League</span></h1><div class="credits"><span>CR</span><b class="cr-val">0</b></div></header>
+  <div class="chapters" id="chapters"></div>
+</section>
+
+<section id="quick" class="screen">
+  <header class="topbar"><button class="back" data-back>‹ Back</button><h1>Quick Race</h1><div class="credits"><span>CR</span><b class="cr-val">0</b></div></header>
+  <div class="setup">
+    <div class="track-grid" id="quick-tracks"></div>
+    <div class="options">
+      <div class="opt"><label>Laps</label><div class="seg" id="opt-laps"></div></div>
+      <div class="opt"><label>Opponents</label><div class="seg" id="opt-rivals"></div></div>
+      <div class="opt"><label>Difficulty</label><div class="seg" id="opt-diff"></div></div>
+      <button class="btn primary big" id="quick-go">Start Race</button>
+    </div>
+  </div>
+</section>
+
+<section id="trial" class="screen">
+  <header class="topbar"><button class="back" data-back>‹ Back</button><h1>Time Trial</h1><div class="credits"><span>CR</span><b class="cr-val">0</b></div></header>
+  <div class="setup">
+    <div class="track-grid" id="trial-tracks"></div>
+    <div class="options">
+      <p class="note">Three laps, no rivals. Your best lap is saved per track. Set a new record to earn a bonus.</p>
+      <button class="btn primary big" id="trial-go">Start Time Trial</button>
+    </div>
+  </div>
+</section>
+
+<section id="garage" class="screen">
+  <header class="topbar"><button class="back" data-back>‹ Back</button><h1>Garage</h1><div class="credits"><span>CR</span><b class="cr-val">0</b></div></header>
+  <aside class="garage-panel">
+    <div class="car-head">
+      <button class="arrow" id="g-prev" aria-label="Previous car">‹</button>
+      <div class="car-title"><span class="cls" id="g-cls"></span><h2 id="g-name"></h2><p id="g-desc"></p></div>
+      <button class="arrow" id="g-next" aria-label="Next car">›</button>
+    </div>
+    <div class="stats" id="g-stats"></div>
+    <div class="g-action" id="g-action"></div>
+    <div class="tabs" id="g-tabs">
+      <button data-tab="perf" class="on">Performance</button><button data-tab="paint">Paint</button><button data-tab="kit">Body Kit</button>
+    </div>
+    <div class="tab-body" id="g-tab"></div>
+  </aside>
+</section>
+
+<section id="settings" class="screen">
+  <header class="topbar"><button class="back" data-back>‹ Back</button><h1>Settings</h1><div></div></header>
+  <div class="settings card">
+    <div class="row"><label>Music</label><input type="range" id="s-music" min="0" max="1" step="0.05"></div>
+    <div class="row"><label>Sound FX</label><input type="range" id="s-sfx" min="0" max="1" step="0.05"></div>
+    <div class="row"><label>Graphics</label><div class="seg" id="s-quality"></div></div>
+    <div class="row"><label>Camera</label><div class="seg" id="s-camera"></div></div>
+    <div class="row"><label>Auto-accelerate</label><div class="seg" id="s-auto"></div></div>
+    <div class="controls">
+      <h3>Controls</h3>
+      <p><kbd>W</kbd><kbd>↑</kbd> Accelerate · <kbd>S</kbd><kbd>↓</kbd> Brake · <kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd> Steer</p>
+      <p><kbd>Space</kbd><kbd>Shift</kbd> Boost · <kbd>C</kbd> Camera · <kbd>Esc</kbd><kbd>P</kbd> Pause</p>
+      <p>Gamepad: stick steers, RT accelerates, LT brakes, A boosts, Y changes camera, Start pauses.</p>
+    </div>
+    <button class="btn danger" id="s-reset">Reset all progress</button>
+  </div>
+</section>
+
+<!-- in-race HUD -->
+<section id="hud" class="hud hidden">
+  <div class="hud-tl panel">
+    <div class="pos"><b id="h-pos">1</b><span>/<i id="h-total">1</i></span></div>
+    <div class="lapbox"><label>LAP</label><b id="h-lap">1/3</b></div>
+  </div>
+  <div class="hud-tc">
+    <div class="time" id="h-time">0:00.00</div>
+    <div class="sub"><span>LAP <b id="h-laptime">0:00.00</b></span><span>BEST <b id="h-best">--:--.--</b></span></div>
+    <div class="objective" id="h-obj"></div>
+  </div>
+  <canvas id="minimap" class="hud-tr panel" width="220" height="220"></canvas>
+  <div class="hud-bc">
+    <div class="speedo">
+      <svg viewBox="0 0 200 116"><path class="arc-bg" d="M20,108 A80,80 0 0 1 180,108"/><path id="h-arc" class="arc" d="M20,108 A80,80 0 0 1 180,108"/></svg>
+      <div class="spd"><b id="h-speed">0</b><span>KM/H</span><em id="h-gear">N</em></div>
+    </div>
+    <div class="bars">
+      <div class="bar boost"><label>BOOST</label><div><i id="h-boost"></i></div></div>
+      <div class="bar hull"><label>HULL</label><div><i id="h-hull"></i></div></div>
+    </div>
+  </div>
+  <div class="tags"><span id="h-slip" class="tag">SLIPSTREAM</span><span id="h-slide" class="tag warn">SLIDING</span></div>
+  <div id="h-msg" class="msg"></div>
+  <div id="h-count" class="count"></div>
+  <button id="h-pause" class="pause-btn" aria-label="Pause">II</button>
+  <div id="touch" class="touch hidden">
+    <div class="tl"><button data-t="left">◀</button><button data-t="right">▶</button></div>
+    <div class="tr"><button data-t="brake">BRK</button><button data-t="boost">BST</button><button data-t="gas">GAS</button></div>
+  </div>
+</section>
+
+<section id="dialog" class="overlay">
+  <div class="dlg">
+    <div class="portrait" id="d-portrait"><span></span></div>
+    <div class="dlg-body">
+      <div class="who"><b id="d-name"></b><span id="d-role"></span></div>
+      <p id="d-text"></p>
+      <div class="dlg-foot"><button class="btn ghost" id="d-skip">Skip</button><button class="btn primary" id="d-next">Continue ▶</button></div>
+    </div>
+  </div>
+</section>
+
+<section id="briefing" class="overlay">
+  <div class="card brief">
+    <span class="kicker" id="b-kicker"></span>
+    <h1 id="b-title"></h1>
+    <div class="brief-grid" id="b-grid"></div>
+    <div class="brief-btns"><button class="btn ghost" id="b-back">Back</button><button class="btn primary big" id="b-go">Start Race</button></div>
+  </div>
+</section>
+
+<section id="pause" class="overlay">
+  <div class="card menu-card">
+    <h1>Paused</h1>
+    <button class="btn primary" id="p-resume">Resume</button>
+    <button class="btn" id="p-restart">Restart</button>
+    <button class="btn" id="p-camera">Camera: Chase</button>
+    <button class="btn ghost" id="p-quit">Quit to Menu</button>
+  </div>
+</section>
+
+<section id="results" class="overlay">
+  <div class="card results">
+    <span class="kicker" id="r-kicker">RACE COMPLETE</span>
+    <h1 id="r-title">1ST</h1>
+    <p id="r-sub"></p>
+    <div class="goal" id="r-goal"></div>
+    <table id="r-table"></table>
+    <div class="reward">+<b id="r-credits">0</b> CR</div>
+    <div class="res-btns"><button class="btn primary" id="r-continue">Continue</button><button class="btn" id="r-retry">Retry</button><button class="btn ghost" id="r-menu">Main Menu</button></div>
+  </div>
+</section>
+
+<section id="confirm" class="overlay">
+  <div class="card menu-card">
+    <h1>Are you sure?</h1>
+    <p id="c-text"></p>
+    <button class="btn danger" id="c-yes">Yes</button>
+    <button class="btn ghost" id="c-no">Cancel</button>
+  </div>
+</section>
+
+<div id="toast"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
